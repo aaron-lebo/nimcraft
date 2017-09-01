@@ -1,9 +1,10 @@
-import tables#math, sequtils
+import math, tables#sequtils
 
+import glfw3
 import opengl
-#from glfw.wrapper import getTime, setTime
 
 const
+  chunkSize = 32
   maxChunks = 8192
   maxPlayers = 128
   maxAddrLength = 256
@@ -85,6 +86,21 @@ var m = Model(
   deleteRadius: 14,
   signRadius: 4,
   dbPath: "nimcraft.db")
+
+proc chunked(x: float): int =
+  (x.round / chunkSize).floor.int
+
+proc timeOfDay(): float =
+  if m.dayLength <= 0:
+    return 0.5
+  let t = GetTime() / m.dayLength.float
+  t - t.floor
+
+proc getDaylight(): float =
+  let
+    t = timeOfDay()
+    t1 = (t - (if t < 0.5: 0.25 else: 0.85)) * 100
+  return 1 - 1 / (1 + -t1.pow(2))
 
 proc resetModel() =
   m.chunks = @[]
