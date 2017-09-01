@@ -108,6 +108,15 @@ proc getScaleFactor(): float =
   GetFrameBufferSize(m.window, bufW.addr, bufH.addr)
   min(2, max(1, bufW / winW))
 
+type Vec = object
+  x*, y*, z*: float
+
+proc getSightVec(rx, ry: float): Vec =
+  let
+    rx1 = rx - 90.0.degToRad
+    m = ry.cos
+  Vec(x: rx1.cos * m, y: ry.sin, z: rx1.sin * m)
+
 proc resetModel() =
   m.chunks = @[]
   m.players = @[]
