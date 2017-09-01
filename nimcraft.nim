@@ -128,14 +128,28 @@ proc getMotionVec(flying: bool, sz, sx, rx, ry: float): Vec =
     var 
       m = ry.cos
       y = ry.sin
-    if sx > 0.0:
+    if sx > 0:
       if sz == 0.0:
         y = 0.0
       m = 1.0
-    if sz > 0.0:
+    if sz > 0:
       y = -y
     return Vec(x: rxcos * m, y: y, z: rxsin * m)
   Vec(x: rxcos, y: 0.0, z: rxsin)
+
+proc genBuf(data: var openArray[float]): GLuint =
+  glGenBuffers(1, result.addr)
+  glBindBuffer(GL_ARRAY_BUFFER, result)
+  glBufferData(GL_ARRAY_BUFFER, data.sizeof, data.addr, GL_STATIC_DRAW)
+  glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+proc genCrosshairBuf(): GLuint =
+  let
+    x = float(m.width / 2)
+    y = float(m.height / 2)
+    p = float(10 * m.scale)
+  var data = [x, y - p, x, y + p, x - p, y, x + p, y]
+  data.genBuf 
 
 proc resetModel() =
   m.chunks = @[]
