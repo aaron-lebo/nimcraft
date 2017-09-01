@@ -56,7 +56,7 @@ type Attrib = object
   program*, position*, normal*, uv*, matrix*, sampler*, camera*, timer*, extra*, extra1*, extra2*, extra3*: GLuint
 
 type Model = object
-  #window*: GLFWwindow
+  window*: Window
   workers*: seq[Worker]
   chunks*: seq[Chunk]
   createRadius*, renderRadius*, deleteRadius*, signRadius*: int
@@ -101,6 +101,12 @@ proc getDaylight(): float =
     t = timeOfDay()
     t1 = (t - (if t < 0.5: 0.25 else: 0.85)) * 100
   return 1 - 1 / (1 + -t1.pow(2))
+
+proc getScaleFactor(): float =
+  var winW, winH, bufW, bufH: cint
+  GetWindowSize(m.window, winW.addr, winH.addr)
+  GetFrameBufferSize(m.window, bufW.addr, bufH.addr)
+  min(2, max(1, bufW / winW))
 
 proc resetModel() =
   m.chunks = @[]
