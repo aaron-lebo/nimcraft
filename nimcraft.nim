@@ -148,7 +148,34 @@ proc genCrosshairBuf(): GLuint =
     x = float(m.width / 2)
     y = float(m.height / 2)
     p = float(10 * m.scale)
-  var data = [x, y - p, x, y + p, x - p, y, x + p, y]
+  var data = [
+    x, y - p, x, y + p, 
+    x - p, y, x + p, y]
+  data.genBuf 
+
+proc genCubeWireframeBuf(x, y, z, n: float): GLuint =
+  const 
+    positions = [
+      -1.0, -1, -1,
+      -1, -1, +1,
+      -1, +1, -1,
+      -1, +1, +1,
+      +1, -1, -1,
+      +1, -1, +1,
+      +1, +1, -1,
+      +1, +1, +1]
+    indices = [
+      0, 1, 0, 2, 0, 4, 1, 3,
+      1, 5, 2, 3, 2, 6, 3, 7,
+      4, 5, 4, 6, 5, 7, 6, 7]
+  var 
+    data: array[72, float]
+    i: int
+  for j in indices:
+    data[i] = x + n * positions[j]
+    data[i + 1] = y + n * positions[j + 1]
+    data[i + 2] = z + n * positions[j + 2]
+    i += 3
   data.genBuf 
 
 proc resetModel() =
