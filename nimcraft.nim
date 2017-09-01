@@ -118,8 +118,8 @@ proc getSightVec(rx, ry: float): Vec =
   Vec(x: rx1.cos * m, y: ry.sin, z: rx1.sin * m)
 
 proc getMotionVec(flying: bool, sz, sx, rx, ry: float): Vec =
-  if sz == 0.0 and sx == 0.0:
-    return Vec(x: 0.0, y: 0.0, z: 0.0)
+  if sz == 0 and sx == 0:
+    return Vec(x: 0, y: 0, z: 0)
   let 
     rx1 = rx + sz.arctan2(sx)
     rxcos = rx1.cos
@@ -129,13 +129,13 @@ proc getMotionVec(flying: bool, sz, sx, rx, ry: float): Vec =
       m = ry.cos
       y = ry.sin
     if sx > 0:
-      if sz == 0.0:
-        y = 0.0
-      m = 1.0
+      if sz == 0:
+        y = 0
+      m = 1
     if sz > 0:
       y = -y
     return Vec(x: rxcos * m, y: y, z: rxsin * m)
-  Vec(x: rxcos, y: 0.0, z: rxsin)
+  Vec(x: rxcos, y: 0, z: rxsin)
 
 proc genBuf(data: var openArray[float]): GLuint =
   glGenBuffers(1, result.addr)
