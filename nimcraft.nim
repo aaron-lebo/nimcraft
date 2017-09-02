@@ -155,19 +155,19 @@ proc genCrosshairBuf(): GLuint =
 
 proc genCubeWireframeBuf(x, y, z, n: float): GLuint =
   const 
-    positions = [
-      -1.0, -1, -1,
-      -1, -1, +1,
-      -1, +1, -1,
-      -1, +1, +1,
-      +1, -1, -1,
-      +1, -1, +1,
-      +1, +1, -1,
-      +1, +1, +1]
     indices = [
       0, 1, 0, 2, 0, 4, 1, 3,
       1, 5, 2, 3, 2, 6, 3, 7,
       4, 5, 4, 6, 5, 7, 6, 7]
+    positions = [
+      -1.0,-1,-1,
+      -1,-1, 1,
+      -1, 1,-1,
+      -1, 1, 1,
+       1,-1,-1,
+       1,-1, 1,
+       1, 1,-1,
+       1, 1, 1]
   var 
     data: array[72, float]
     ind: int
@@ -220,23 +220,23 @@ proc genSphere(data: var openArray[float], r: float, detail: int) =
       [0, 3, 2], [0, 2, 1],
       [5, 2, 3], [5, 1, 2]]
     positions = [
-      [0.0, 0, -1], [1.0, 0, 0],
-      [0.0, -1, 0], [-1.0, 0, 0],
-      [0.0, 1, 0], [0.0, 0, 1]]
+      [0.0, 0,-1], [ 1.0, 0, 0],
+      [0.0,-1, 0], [-1.0, 0, 0],
+      [0.0, 1, 0], [ 0.0, 0, 1]]
     uvs = [
       [0.0, 0.5], [0.0, 0.5],
       [0.0, 0.0], [0.0, 0.5],
       [0.0, 1.0], [0.0, 0.5]]
   var ind: int
-  for i in 0..7:
+  for i in indices:
     genSphere1(
       data, ind, r, detail,
-        positions[indices[i][0]],
-        positions[indices[i][1]],
-        positions[indices[i][2]],
-        uvs[indices[i][0]],
-        uvs[indices[i][1]],
-        uvs[indices[i][2]])
+        positions[i[0]],
+        positions[i[1]],
+        positions[i[2]],
+        uvs[i[0]],
+        uvs[i[1]],
+        uvs[i[2]])
 
 proc resetModel() =
   m.chunks = @[]
