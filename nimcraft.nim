@@ -1,4 +1,4 @@
-import math, tables#sequtils
+import math, sequtils, tables
 
 import glfw3
 import opengl
@@ -170,13 +170,73 @@ proc genCubeWireframeBuf(x, y, z, n: float): GLuint =
       4, 5, 4, 6, 5, 7, 6, 7]
   var 
     data: array[72, float]
-    i: int
-  for j in indices:
-    data[i] = x + n * positions[j]
-    data[i + 1] = y + n * positions[j + 1]
-    data[i + 2] = z + n * positions[j + 2]
-    i += 3
+    ind: int
+  for i in indices:
+    data[ind] = x + n * positions[i]
+    data[ind + 1] = y + n * positions[i + 1]
+    data[ind + 2] = z + n * positions[i + 2]
+    ind += 3
   data.genBuf 
+
+proc normalize(xyz: var array[3, float]) =
+  let d = xyz.mapIt(it.pow(2)).sum.sqrt
+  for x in 0..xyz.high:
+    xyz[x] /= d
+
+proc genSphere1(data: var openArray[float], ind: var int, r: float, detail: int, a, b, c: array[3, float], ta, tb, tc: array[2, float]) =
+  if detail == 0:
+    for x in [
+      a[0] * r, a[1] * r, a[2] * r, a[0], a[1], a[2], ta[0], ta[1],
+      b[0] * r, b[1] * r, b[2] * r, b[0], b[1], b[2], tb[0], tb[1],
+      c[0] * r, c[1] * r, c[2] * r, c[0], c[1], c[2], tc[0], tc[1]]:
+      data[ind] = x 
+      ind += 1
+    return
+
+  var ab, ac, bc: array[3, float]
+  for i in 0..2:
+    ab[i] = (a[i] + b[i]) / 2
+    ac[i] = (a[i] + c[i]) / 2
+    bc[i] = (b[i] + c[i]) / 2
+ 
+  ab.normalize
+  ac.normalize
+  bc.normalize
+  let 
+    tab = [0.0, 1 - ab[1].arccos / PI]
+    tac = [0.0, 1 - ac[1].arccos / PI]
+    tbc = [0.0, 1 - bc[1].arccos / PI]
+    detail1 = detail - 1
+  genSphere1(data, ind, r, detail1, a, ab, ac, ta, tab, tac)
+  genSphere1(data, ind, r, detail1, b, bc, ab, tb, tbc, tab)
+  genSphere1(data, ind, r, detail1, c, ac, ac, tc, tac, tbc)
+  genSphere1(data, ind, r, detail1, ab, bc, ac, tab, tbc, tac)
+
+proc genSphere(data: var openArray[float], r: float, detail: int) =
+  let 
+    indices = [
+      [4, 3, 0], [1, 4, 0],
+      [3, 4, 5], [4, 1, 5],
+      [0, 3, 2], [0, 2, 1],
+      [5, 2, 3], [5, 1, 2]]
+    positions = [
+      [0.0, 0, -1], [1.0, 0, 0],
+      [0.0, -1, 0], [-1.0, 0, 0],
+      [0.0, 1, 0], [0.0, 0, 1]]
+    uvs = [
+      [0.0, 0.5], [0.0, 0.5],
+      [0.0, 0.0], [0.0, 0.5],
+      [0.0, 1.0], [0.0, 0.5]]
+  var ind: int
+  for i in 0..7:
+    genSphere1(
+      data, ind, r, detail,
+        positions[indices[i][0]],
+        positions[indices[i][1]],
+        positions[indices[i][2]],
+        uvs[indices[i][0]],
+        uvs[indices[i][1]],
+        uvs[indices[i][2]])
 
 proc resetModel() =
   m.chunks = @[]
