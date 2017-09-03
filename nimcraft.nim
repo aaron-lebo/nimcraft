@@ -145,15 +145,13 @@ proc genBuf(data: var openArray[float]): GLuint =
 
 proc genCrosshairBuf(): GLuint =
   let
-    x = float(m.width / 2)
-    y = float(m.height / 2)
+    x: float = m.width / 2
+    y: float = m.height / 2
     p = float(10 * m.scale)
-  var data = [
-    x, y - p, x, y + p, 
-    x - p, y, x + p, y]
+  var data = [x, y - p, x, y + p, x - p, y, x + p, y]
   data.genBuf 
 
-proc genCubeWireframeBuf(x, y, z, n: float): GLuint =
+proc genCubeBuf(x, y, z, n: float): GLuint =
   const 
     indices = [
       0, 1, 0, 2, 0, 4, 1, 3,
@@ -237,6 +235,11 @@ proc genSphere(data: var openArray[float], r: float, detail: int) =
         uvs[i[0]],
         uvs[i[1]],
         uvs[i[2]])
+
+proc genSkyBuf(): GLuint =
+  var data: array[12288, float]
+  data.genSphere(1, 3)
+  data.genBuf 
 
 proc resetModel() =
   m.chunks = @[]
