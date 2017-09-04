@@ -189,12 +189,11 @@ proc normalize(xyz: var array[3, float]) =
 
 proc makeSphere1(data: var openArray[float], ind: var int, r: float, detail: int, a, b, c: array[3, float], ta, tb, tc: array[2, float]) =
   if detail == 0:
-    for x in [
+    data.append(
+      ind,
       a[0] * r, a[1] * r, a[2] * r, a[0], a[1], a[2], ta[0], ta[1],
       b[0] * r, b[1] * r, b[2] * r, b[0], b[1], b[2], tb[0], tb[1],
-      c[0] * r, c[1] * r, c[2] * r, c[0], c[1], c[2], tc[0], tc[1]]:
-      data[ind] = x
-      ind += 1
+      c[0] * r, c[1] * r, c[2] * r, c[0], c[1], c[2], tc[0], tc[1])
     return
 
   var ab, ac, bc: array[3, float]
