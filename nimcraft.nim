@@ -151,29 +151,35 @@ proc genCrosshairBuf(): GLuint =
   var data = [x, y - p, x, y + p, x - p, y, x + p, y]
   data.genBuf
 
+proc append(data: var openArray[float], ind: var int, args: varargs[float]) =
+  for arg in args:  
+    data[ind] = arg
+    ind += 1
+
 proc genWireframeBuf(x, y, z, n: float): GLuint =
   const
+    positions = [
+      -1.0,-1,-1,
+      -1,  -1, 1,
+      -1,   1,-1,
+      -1,   1, 1,
+       1,  -1,-1,
+       1,  -1, 1,
+       1,   1,-1,
+       1,   1, 1]    
     indices = [
       0, 1, 0, 2, 0, 4, 1, 3,
       1, 5, 2, 3, 2, 6, 3, 7,
       4, 5, 4, 6, 5, 7, 6, 7]
-    positions = [
-      -1.0,-1,-1,
-      -1,-1, 1,
-      -1, 1,-1,
-      -1, 1, 1,
-       1,-1,-1,
-       1,-1, 1,
-       1, 1,-1,
-       1, 1, 1]
   var
     data: array[72, float]
     ind: int
   for i in indices:
-    data[ind] = x + n * positions[i]
-    data[ind + 1] = y + n * positions[i + 1]
-    data[ind + 2] = z + n * positions[i + 2]
-    ind += 3
+    data.append(
+      ind,
+      x + n * positions[i],
+      y + n * positions[i + 1],
+      z + n * positions[i + 2])
   data.genBuf
 
 proc normalize(xyz: var array[3, float]) =
@@ -239,17 +245,9 @@ proc genSkyBuf(): GLuint =
   var data = makeSphere(1, 3)
   data.genBuf
 
-proc makeFaces(components, n: int): seq[GLfloat] =
-  return result
-
 var blocks: array[256, array[6, int]]
 
-proc append(data: var openArray[GLfloat], ind: var int, args: varargs[float]) =
-  for arg in args:  
-    data[ind] = arg
-    ind += 1
-
-proc makeCube(ao, light: var array[6, array[4, float]], left, right, top, bottom, front, back: int, x, y, z, n: float, w: int): array[360, GLfloat] =
+proc makeCube(ao, light: var array[6, array[4, float]], left, right, top, bottom, front, back: int, x, y, z, n: float, w: int): array[360, float] =
   const
     positions = [
       [[-1.0,-1,-1], [-1.0,-1, 1], [-1.0, 1,-1], [-1.0, 1, 1]],
@@ -314,7 +312,7 @@ proc makeCube(ao, light: var array[6, array[4, float]], left, right, top, bottom
         z + n * pos[2],
         norm[0],
         norm[1],
-        norm[1],
+        norm[2],
         du + (if uv[0] == 0: a else: b),
         dv + (if uv[1] == 0: a else: b),
         aoi[j],
