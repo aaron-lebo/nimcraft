@@ -215,7 +215,7 @@ proc makeSphere1(data: var openArray[float], ind: var int, r: float, detail: int
   makeSphere1(data, ind, r, detail1, c, ac, ac, tc, tac, tbc)
   makeSphere1(data, ind, r, detail1, ab, bc, ac, tab, tbc, tac)
 
-proc makeSphere(r: float, detail: int): var array[12288, float] =
+proc makeSphere(r: float, detail: int): array[12288, float] =
   let
     positions = [
       [0.0, 0,-1], [ 1.0, 0, 0],
@@ -257,20 +257,6 @@ proc makeCube(ao, light: Mat6x4, left, right, top, bottom, front, back: int, x, 
       [[-1.0,-1,-1], [-1.0,-1, 1], [ 1.0,-1,-1], [ 1.0,-1, 1]],
       [[-1.0,-1,-1], [-1.0, 1,-1], [ 1.0,-1,-1], [ 1.0, 1,-1]],
       [[-1.0,-1, 1], [-1.0, 1, 1], [ 1.0,-1, 1], [ 1.0, 1, 1]]]
-    normals = [
-      [-1.0, 0, 0],
-      [ 1.0, 0, 0],
-      [ 0.0, 1, 0],
-      [ 0.0,-1, 0],
-      [ 0.0, 0,-1],
-      [ 0.0, 0, 1]] 
-    uvs = [
-      [[0.0, 0], [1.0, 0], [0.0, 1], [1.0, 1]],
-      [[1.0, 0], [0.0, 0], [1.0, 1], [0.0, 1]],
-      [[0.0, 1], [0.0, 0], [1.0, 1], [1.0, 0]],
-      [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
-      [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
-      [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
     indices = [
       [0, 3, 2, 0, 1, 3],
       [0, 3, 1, 0, 2, 3],
@@ -285,6 +271,20 @@ proc makeCube(ao, light: Mat6x4, left, right, top, bottom, front, back: int, x, 
       [0, 2, 1, 2, 3, 1],
       [0, 1, 2, 1, 3, 2],
       [0, 2, 1, 2, 3, 1]]
+    normals = [
+      [-1.0, 0, 0],
+      [ 1.0, 0, 0],
+      [ 0.0, 1, 0],
+      [ 0.0,-1, 0],
+      [ 0.0, 0,-1],
+      [ 0.0, 0, 1]] 
+    uvs = [
+      [[0.0, 0], [1.0, 0], [0.0, 1], [1.0, 1]],
+      [[1.0, 0], [0.0, 0], [1.0, 1], [0.0, 1]],
+      [[0.0, 1], [0.0, 0], [1.0, 1], [1.0, 0]],
+      [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
+      [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
+      [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
     s = 0.0625
     a = 0 + 1 / 2048.0
     b = s - 1 / 2048.0
@@ -336,15 +336,18 @@ plants[21] = 52 # sun flower
 plants[22] = 53 # white flower 
 plants[23] = 54 # blue flower 
 
-proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, float] =
+proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): GLuint =
   const
-    ao = 0.0
-    light = 1.0
     positions = [
       [[ 0.0,-1,-1], [ 0.0,-1, 1], [ 0.0, 1,-1], [ 0.0, 1, 1]],
       [[ 0.0,-1,-1], [ 0.0,-1, 1], [ 0.0, 1,-1], [ 0.0, 1, 1]],
       [[-1.0,-1, 0], [-1.0, 1, 0], [ 1.0,-1, 0], [ 1.0, 1, 0]],
       [[-1.0,-1, 0], [-1.0, 1, 0], [ 1.0,-1, 0], [ 1.0, 1, 0]]]
+    indices = [
+      [0, 3, 2, 0, 1, 3],
+      [0, 3, 1, 0, 2, 3],
+      [0, 3, 2, 0, 1, 3],
+      [0, 3, 1, 0, 2, 3]]   
     normals = [
       [-1.0, 0, 0],
       [ 1.0, 0, 0],
@@ -355,16 +358,13 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
       [[1.0, 0], [0.0, 0], [1.0, 1], [0.0, 1]],
       [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
       [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
-    indices = [
-      [0, 3, 2, 0, 1, 3],
-      [0, 3, 1, 0, 2, 3],
-      [0, 3, 2, 0, 1, 3],
-      [0, 3, 1, 0, 2, 3]]   
     s = 0.0625
   let
     du = float(plants[w] mod 16) * s
     dv = plants[w] / 16 * s
-  var ind: int
+  var 
+    data: array[240, float]
+    ind: int
   for i in 0..3:
     let norm = normals[i]
     for v in 0..5:
@@ -372,7 +372,7 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
         j = indices[i][v]     
         pos = positions[i][j]
         uv = uvs[i][j]
-      result.append(
+      data.append(
         ind,
         n * pos[0],
         n * pos[1],
@@ -382,8 +382,9 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
         norm[2],
         du + (if uv[0] == 0: 0.0 else: s),
         dv + (if uv[1] == 0: 0.0 else: s),
-        ao,
-        light)
+        0.0,
+        1.0)
+  data.genBuf
 
 proc resetModel() =
   m.chunks = @[]
