@@ -1,4 +1,4 @@
-import algorithm, math, sequtils, tables
+import math, sequtils, tables
 
 import glfw3
 import opengl
@@ -246,7 +246,9 @@ proc genSkyBuf(): GLuint =
 
 var blocks: array[256, array[6, int]]
 
-proc makeCube(ao, light: var array[6, array[4, float]], left, right, top, bottom, front, back: int, x, y, z, n: float, w: int): array[360, float] =
+type Mat6x4 = array[6, array[4, float]]
+
+proc makeCube(ao, light: Mat6x4, left, right, top, bottom, front, back: int, x, y, z, n: float, w: int): array[360, float] =
   const
     positions = [
       [[-1.0,-1,-1], [-1.0,-1, 1], [-1.0, 1,-1], [-1.0, 1, 1]],
@@ -318,8 +320,12 @@ proc makeCube(ao, light: var array[6, array[4, float]], left, right, top, bottom
         light[i][j])
 
 proc genCubeBuf(x, y, z, n: float, w: int): GLuint =
-  #var data = makeCube(x, y, z, n, w)
-  0#data.genBuf
+  var ao, light: Mat6x4
+  for i in 0..5:
+    for j in 0..3:
+      light[i][j] = 0.5
+  var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w)
+  data.genBuf
 
 proc resetModel() =
   m.chunks = @[]
