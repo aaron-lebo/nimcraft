@@ -272,19 +272,19 @@ proc makeCube(ao, light: Mat6x4, left, right, top, bottom, front, back: int, x, 
       [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
       [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
     indices = [
-      [0.0, 3, 2, 0, 1, 3],
-      [0.0, 3, 1, 0, 2, 3],
-      [0.0, 3, 2, 0, 1, 3],
-      [0.0, 3, 1, 0, 2, 3],
-      [0.0, 3, 2, 0, 1, 3],
-      [0.0, 3, 1, 0, 2, 3]]   
+      [0, 3, 2, 0, 1, 3],
+      [0, 3, 1, 0, 2, 3],
+      [0, 3, 2, 0, 1, 3],
+      [0, 3, 1, 0, 2, 3],
+      [0, 3, 2, 0, 1, 3],
+      [0, 3, 1, 0, 2, 3]]   
     flipped = [
-      [0.0, 1, 2, 1, 3, 2],
-      [0.0, 2, 1, 2, 3, 1],
-      [0.0, 1, 2, 1, 3, 2],
-      [0.0, 2, 1, 2, 3, 1],
-      [0.0, 1, 2, 1, 3, 2],
-      [0.0, 2, 1, 2, 3, 1]]
+      [0, 1, 2, 1, 3, 2],
+      [0, 2, 1, 2, 3, 1],
+      [0, 1, 2, 1, 3, 2],
+      [0, 2, 1, 2, 3, 1],
+      [0, 1, 2, 1, 3, 2],
+      [0, 2, 1, 2, 3, 1]]
     s = 0.0625
     a = 0 + 1 / 2048.0
     b = s - 1 / 2048.0
@@ -303,7 +303,7 @@ proc makeCube(ao, light: Mat6x4, left, right, top, bottom, front, back: int, x, 
       norm = normals[i]
     for v in 0..5:
       let 
-        j = int(if flip: flipped[i][v] else: indices[i][v])      
+        j = if flip: flipped[i][v] else: indices[i][v]      
         pos = positions[i][j]
         uv = uvs[i][j]
       result.append(
@@ -356,10 +356,10 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
       [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
       [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
     indices = [
-      [0.0, 3, 2, 0, 1, 3],
-      [0.0, 3, 1, 0, 2, 3],
-      [0.0, 3, 2, 0, 1, 3],
-      [0.0, 3, 1, 0, 2, 3]]   
+      [0, 3, 2, 0, 1, 3],
+      [0, 3, 1, 0, 2, 3],
+      [0, 3, 2, 0, 1, 3],
+      [0, 3, 1, 0, 2, 3]]   
     s = 0.0625
     a = 0.0
     b = s
@@ -371,7 +371,7 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
     let norm = normals[i]
     for v in 0..5:
       let 
-        j = indices[i][v].int     
+        j = indices[i][v]     
         pos = positions[i][j]
         uv = uvs[i][j]
       result.append(
