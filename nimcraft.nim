@@ -1,4 +1,4 @@
-import math, sequtils, tables
+import algorithm, math, sequtils, tables
 
 import glfw3
 import opengl
@@ -120,12 +120,12 @@ proc getSightVec(rx, ry: float): Vec =
 proc getMotionVec(flying: bool, sz, sx, rx, ry: float): Vec =
   if sz == 0 and sx == 0:
     return Vec(x: 0, y: 0, z: 0)
-  let 
+  let
     rx1 = rx + sz.arctan2(sx)
     rxcos = rx1.cos
     rxsin = rx1.sin
   if flying:
-    var 
+    var
       m = ry.cos
       y = ry.sin
     if sx > 0:
@@ -149,10 +149,10 @@ proc genCrosshairBuf(): GLuint =
     y: float = m.height / 2
     p = float(10 * m.scale)
   var data = [x, y - p, x, y + p, x - p, y, x + p, y]
-  data.genBuf 
+  data.genBuf
 
-proc genCubeBuf(x, y, z, n: float): GLuint =
-  const 
+proc genWireframeBuf(x, y, z, n: float): GLuint =
+  const
     indices = [
       0, 1, 0, 2, 0, 4, 1, 3,
       1, 5, 2, 3, 2, 6, 3, 7,
@@ -166,7 +166,7 @@ proc genCubeBuf(x, y, z, n: float): GLuint =
        1,-1, 1,
        1, 1,-1,
        1, 1, 1]
-  var 
+  var
     data: array[72, float]
     ind: int
   for i in indices:
@@ -174,20 +174,20 @@ proc genCubeBuf(x, y, z, n: float): GLuint =
     data[ind + 1] = y + n * positions[i + 1]
     data[ind + 2] = z + n * positions[i + 2]
     ind += 3
-  data.genBuf 
+  data.genBuf
 
 proc normalize(xyz: var array[3, float]) =
   let d = xyz.mapIt(it.pow(2)).sum.sqrt
   for x in 0..xyz.high:
     xyz[x] /= d
 
-proc genSphere1(data: var openArray[float], ind: var int, r: float, detail: int, a, b, c: array[3, float], ta, tb, tc: array[2, float]) =
+proc makeSphere1(data: var openArray[float], ind: var int, r: float, detail: int, a, b, c: array[3, float], ta, tb, tc: array[2, float]) =
   if detail == 0:
     for x in [
       a[0] * r, a[1] * r, a[2] * r, a[0], a[1], a[2], ta[0], ta[1],
       b[0] * r, b[1] * r, b[2] * r, b[0], b[1], b[2], tb[0], tb[1],
       c[0] * r, c[1] * r, c[2] * r, c[0], c[1], c[2], tc[0], tc[1]]:
-      data[ind] = x 
+      data[ind] = x
       ind += 1
     return
 
@@ -196,22 +196,22 @@ proc genSphere1(data: var openArray[float], ind: var int, r: float, detail: int,
     ab[i] = (a[i] + b[i]) / 2
     ac[i] = (a[i] + c[i]) / 2
     bc[i] = (b[i] + c[i]) / 2
- 
+
   ab.normalize
   ac.normalize
   bc.normalize
-  let 
+  let
     tab = [0.0, 1 - ab[1].arccos / PI]
     tac = [0.0, 1 - ac[1].arccos / PI]
     tbc = [0.0, 1 - bc[1].arccos / PI]
     detail1 = detail - 1
-  genSphere1(data, ind, r, detail1, a, ab, ac, ta, tab, tac)
-  genSphere1(data, ind, r, detail1, b, bc, ab, tb, tbc, tab)
-  genSphere1(data, ind, r, detail1, c, ac, ac, tc, tac, tbc)
-  genSphere1(data, ind, r, detail1, ab, bc, ac, tab, tbc, tac)
+  makeSphere1(data, ind, r, detail1, a, ab, ac, ta, tab, tac)
+  makeSphere1(data, ind, r, detail1, b, bc, ab, tb, tbc, tab)
+  makeSphere1(data, ind, r, detail1, c, ac, ac, tc, tac, tbc)
+  makeSphere1(data, ind, r, detail1, ab, bc, ac, tab, tbc, tac)
 
-proc genSphere(data: var openArray[float], r: float, detail: int) =
-  let 
+proc makeSphere(r: float, detail: int): var array[12288, float] =
+  let
     indices = [
       [4, 3, 0], [1, 4, 0],
       [3, 4, 5], [4, 1, 5],
@@ -227,19 +227,102 @@ proc genSphere(data: var openArray[float], r: float, detail: int) =
       [0.0, 1.0], [0.0, 0.5]]
   var ind: int
   for i in indices:
-    genSphere1(
-      data, ind, r, detail,
-        positions[i[0]],
-        positions[i[1]],
-        positions[i[2]],
-        uvs[i[0]],
-        uvs[i[1]],
-        uvs[i[2]])
+    makeSphere1(result, ind, r, detail,
+      positions[i[0]],
+      positions[i[1]],
+      positions[i[2]],
+      uvs[i[0]],
+      uvs[i[1]],
+      uvs[i[2]])
 
 proc genSkyBuf(): GLuint =
-  var data: array[12288, float]
-  data.genSphere(1, 3)
-  data.genBuf 
+  var data = makeSphere(1, 3)
+  data.genBuf
+
+proc makeFaces(components, n: int): seq[GLfloat] =
+  return result
+
+var blocks: array[256, array[6, int]]
+
+proc append(data: var openArray[GLfloat], ind: var int, args: varargs[float]) =
+  for arg in args:  
+    data[ind] = arg
+    ind += 1
+
+proc makeCube(ao, light: var array[6, array[4, float]], left, right, top, bottom, front, back: int, x, y, z, n: float, w: int): array[360, GLfloat] =
+  const
+    positions = [
+      [[-1.0,-1,-1], [-1.0,-1, 1], [-1.0, 1,-1], [-1.0, 1, 1]],
+      [[ 1.0,-1,-1], [ 1.0,-1, 1], [ 1.0, 1,-1], [ 1.0, 1, 1]],
+      [[-1.0, 1,-1], [-1.0, 1, 1], [ 1.0, 1,-1], [ 1.0, 1, 1]],
+      [[-1.0,-1,-1], [-1.0,-1, 1], [ 1.0,-1,-1], [ 1.0,-1, 1]],
+      [[-1.0,-1,-1], [-1.0, 1,-1], [ 1.0,-1,-1], [ 1.0, 1,-1]],
+      [[-1.0,-1, 1], [-1.0, 1, 1], [ 1.0,-1, 1], [ 1.0, 1, 1]]]
+    normals = [
+      [-1.0, 0, 0],
+      [ 1.0, 0, 0],
+      [ 0.0, 1, 0],
+      [ 0.0,-1, 0],
+      [ 0.0, 0,-1],
+      [ 0.0, 0, 1]] 
+    uvs = [
+      [[0.0, 0], [1.0, 0], [0.0, 1], [1.0, 1]],
+      [[1.0, 0], [0.0, 0], [1.0, 1], [0.0, 1]],
+      [[0.0, 1], [0.0, 0], [1.0, 1], [1.0, 0]],
+      [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
+      [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
+      [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
+    indices = [
+      [0.0, 3, 2, 0, 1, 3],
+      [0.0, 3, 1, 0, 2, 3],
+      [0.0, 3, 2, 0, 1, 3],
+      [0.0, 3, 1, 0, 2, 3],
+      [0.0, 3, 2, 0, 1, 3],
+      [0.0, 3, 1, 0, 2, 3]]   
+    flipped = [
+      [0.0, 1, 2, 1, 3, 2],
+      [0.0, 2, 1, 2, 3, 1],
+      [0.0, 1, 2, 1, 3, 2],
+      [0.0, 2, 1, 2, 3, 1],
+      [0.0, 1, 2, 1, 3, 2],
+      [0.0, 2, 1, 2, 3, 1]]
+    s = 0.0625
+    a = 0 + 1 / 2048.0
+    b = s - 1 / 2048.0
+  let
+    faces = [left, right, top, bottom, front, back]
+    tiles = blocks[w] 
+  var ind: int
+  for i in 0..5:
+    if faces[i] == 0:
+      continue
+    let
+      du = float(tiles[i] mod 16) * s
+      dv = tiles[i] / 16 * s
+      aoi = ao[i]
+      flip = aoi[0] + aoi[3] > aoi[1] + aoi[2]
+      norm = normals[i]
+    for v in 0..5:
+      let 
+        j = int(if flip: flipped[i][v] else: indices[i][v])      
+        pos = positions[i][j]
+        uv = uvs[i][j]
+      result.append(
+        ind,
+        x + n * pos[0],
+        y + n * pos[1],
+        z + n * pos[2],
+        norm[0],
+        norm[1],
+        norm[1],
+        du + (if uv[0] == 0: a else: b),
+        dv + (if uv[1] == 0: a else: b),
+        aoi[j],
+        light[i][j])
+
+proc genCubeBuf(x, y, z, n: float, w: int): GLuint =
+  #var data = makeCube(x, y, z, n, w)
+  0#data.genBuf
 
 proc resetModel() =
   m.chunks = @[]
