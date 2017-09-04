@@ -361,8 +361,6 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
       [0, 3, 2, 0, 1, 3],
       [0, 3, 1, 0, 2, 3]]   
     s = 0.0625
-    a = 0.0
-    b = s
   var ind: int
   let
     du = float(plants[w] mod 16) * s
@@ -382,8 +380,8 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
         norm[0],
         norm[1],
         norm[2],
-        du + (if uv[0] == 0: a else: b),
-        dv + (if uv[1] == 0: a else: b),
+        du + (if uv[0] == 0: 0.0 else: s),
+        dv + (if uv[1] == 0: 0.0 else: s),
         ao,
         light)
 
