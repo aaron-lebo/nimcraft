@@ -361,10 +361,10 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, floa
       [0, 3, 2, 0, 1, 3],
       [0, 3, 1, 0, 2, 3]]   
     s = 0.0625
-  var ind: int
   let
     du = float(plants[w] mod 16) * s
     dv = plants[w] / 16 * s
+  var ind: int
   for i in 0..3:
     let norm = normals[i]
     for v in 0..5:
