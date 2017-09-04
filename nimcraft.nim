@@ -217,15 +217,15 @@ proc makeSphere1(data: var openArray[float], ind: var int, r: float, detail: int
 
 proc makeSphere(r: float, detail: int): var array[12288, float] =
   let
+    positions = [
+      [0.0, 0,-1], [ 1.0, 0, 0],
+      [0.0,-1, 0], [-1.0, 0, 0],
+      [0.0, 1, 0], [ 0.0, 0, 1]]    
     indices = [
       [4, 3, 0], [1, 4, 0],
       [3, 4, 5], [4, 1, 5],
       [0, 3, 2], [0, 2, 1],
       [5, 2, 3], [5, 1, 2]]
-    positions = [
-      [0.0, 0,-1], [ 1.0, 0, 0],
-      [0.0,-1, 0], [-1.0, 0, 0],
-      [0.0, 1, 0], [ 0.0, 0, 1]]
     uvs = [
       [0.0, 0.5], [0.0, 0.5],
       [0.0, 0.0], [0.0, 0.5],
@@ -326,6 +326,66 @@ proc genCubeBuf(x, y, z, n: float, w: int): GLuint =
       light[i][j] = 0.5
   var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w)
   data.genBuf
+
+var plants: array[256, int]
+plants[17] = 48 # tall grass
+plants[18] = 49 # yellow flower
+plants[19] = 50 # red flower 
+plants[20] = 51 # purple flower 
+plants[21] = 52 # sun flower 
+plants[22] = 53 # white flower 
+plants[23] = 54 # blue flower 
+
+proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): array[240, float] =
+  const
+    ao = 0.0
+    light = 1.0
+    positions = [
+      [[ 0.0,-1,-1], [ 0.0,-1, 1], [ 0.0, 1,-1], [ 0.0, 1, 1]],
+      [[ 0.0,-1,-1], [ 0.0,-1, 1], [ 0.0, 1,-1], [ 0.0, 1, 1]],
+      [[-1.0,-1, 0], [-1.0, 1, 0], [ 1.0,-1, 0], [ 1.0, 1, 0]],
+      [[-1.0,-1, 0], [-1.0, 1, 0], [ 1.0,-1, 0], [ 1.0, 1, 0]]]
+    normals = [
+      [-1.0, 0, 0],
+      [ 1.0, 0, 0],
+      [ 0.0, 0,-1],
+      [ 0.0, 0, 1]] 
+    uvs = [
+      [[0.0, 0], [1.0, 0], [0.0, 1], [1.0, 1]],
+      [[1.0, 0], [0.0, 0], [1.0, 1], [0.0, 1]],
+      [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
+      [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
+    indices = [
+      [0.0, 3, 2, 0, 1, 3],
+      [0.0, 3, 1, 0, 2, 3],
+      [0.0, 3, 2, 0, 1, 3],
+      [0.0, 3, 1, 0, 2, 3]]   
+    s = 0.0625
+    a = 0.0
+    b = s
+  var ind: int
+  let
+    du = float(plants[w] mod 16) * s
+    dv = plants[w] / 16 * s
+  for i in 0..3:
+    let norm = normals[i]
+    for v in 0..5:
+      let 
+        j = indices[i][v].int     
+        pos = positions[i][j]
+        uv = uvs[i][j]
+      result.append(
+        ind,
+        n * pos[0],
+        n * pos[1],
+        n * pos[2],
+        norm[0],
+        norm[1],
+        norm[2],
+        du + (if uv[0] == 0: a else: b),
+        dv + (if uv[1] == 0: a else: b),
+        ao,
+        light)
 
 proc resetModel() =
   m.chunks = @[]
