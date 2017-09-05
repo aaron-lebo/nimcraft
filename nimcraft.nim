@@ -187,7 +187,8 @@ proc normalize(xyz: var array[3, float]) =
   for x in 0..xyz.high:
     xyz[x] /= d
 
-proc makeSphere1(data: var openArray[float], ind: var int, r: float, detail: int, a, b, c: array[3, float], ta, tb, tc: array[2, float]) =
+proc makeSphere(data: var array[12288, float], ind: var int, r: float, detail: int, a, b, c: array[3, float], 
+  ta, tb, tc: array[2, float]) =
   if detail == 0:
     data.append(
       ind,
@@ -210,12 +211,12 @@ proc makeSphere1(data: var openArray[float], ind: var int, r: float, detail: int
     tac = [0.0, 1 - ac[1].arccos / PI]
     tbc = [0.0, 1 - bc[1].arccos / PI]
     detail1 = detail - 1
-  makeSphere1(data, ind, r, detail1, a, ab, ac, ta, tab, tac)
-  makeSphere1(data, ind, r, detail1, b, bc, ab, tb, tbc, tab)
-  makeSphere1(data, ind, r, detail1, c, ac, ac, tc, tac, tbc)
-  makeSphere1(data, ind, r, detail1, ab, bc, ac, tab, tbc, tac)
+  data.makeSphere(ind, r, detail1, a, ab, ac, ta, tab, tac)
+  data.makeSphere(ind, r, detail1, b, bc, ab, tb, tbc, tab)
+  data.makeSphere(ind, r, detail1, c, ac, ac, tc, tac, tbc)
+  data.makeSphere(ind, r, detail1, ab, bc, ac, tab, tbc, tac)
 
-proc makeSphere(r: float, detail: int): array[12288, float] =
+proc genSkyBuf(): GLuint =
   let
     positions = [
       [0.0, 0,-1], [ 1.0, 0, 0],
@@ -230,18 +231,20 @@ proc makeSphere(r: float, detail: int): array[12288, float] =
       [0.0, 0.5], [0.0, 0.5],
       [0.0, 0.0], [0.0, 0.5],
       [0.0, 1.0], [0.0, 0.5]]
-  var ind: int
+  var 
+      data: array[12288, float] 
+      ind: int
   for i in indices:
-    makeSphere1(result, ind, r, detail,
+    data.makeSphere(
+      ind, 
+      1, 
+      3,
       positions[i[0]],
       positions[i[1]],
       positions[i[2]],
       uvs[i[0]],
       uvs[i[1]],
       uvs[i[2]])
-
-proc genSkyBuf(): GLuint =
-  var data = makeSphere(1, 3)
   data.genBuf
 
 var blocks: array[256, array[6, int]]
@@ -336,7 +339,7 @@ plants[21] = 52 # sun flower
 plants[22] = 53 # white flower 
 plants[23] = 54 # blue flower 
 
-proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): GLuint =
+proc makePlant(ao, light: float, px, py, pz, n: float, w: int, rotation: float): array[240, float] =
   const
     positions = [
       [[ 0.0,-1,-1], [ 0.0,-1, 1], [ 0.0, 1,-1], [ 0.0, 1, 1]],
@@ -362,9 +365,7 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): GLuint =
   let
     du = float(plants[w] mod 16) * s
     dv = plants[w] / 16 * s
-  var 
-    data: array[240, float]
-    ind: int
+  var ind: int
   for i in 0..3:
     let norm = normals[i]
     for v in 0..5:
@@ -372,7 +373,7 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): GLuint =
         j = indices[i][v]     
         pos = positions[i][j]
         uv = uvs[i][j]
-      data.append(
+      result.append(
         ind,
         n * pos[0],
         n * pos[1],
@@ -382,8 +383,11 @@ proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): GLuint =
         norm[2],
         du + (if uv[0] == 0: 0.0 else: s),
         dv + (if uv[1] == 0: 0.0 else: s),
-        0.0,
-        1.0)
+        ao,
+        light)
+
+proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): GLuint =
+  var data = makePlant(0.0, 1.0, px, py, pz, n, w, rotation) 
   data.genBuf
 
 proc resetModel() =
