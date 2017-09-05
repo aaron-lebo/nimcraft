@@ -386,8 +386,8 @@ proc makePlant(ao, light: float, px, py, pz, n: float, w: int, rotation: float):
         ao,
         light)
 
-proc genPlantBuf(px, py, pz, n: float, w: int, rotation: float): GLuint =
-  var data = makePlant(0.0, 1.0, px, py, pz, n, w, rotation) 
+proc genPlantBuf(px, py, pz, n: float, w: int): GLuint =
+  var data = makePlant(0, 1, px, py, pz, n, w, 45) 
   data.genBuf
 
 proc resetModel() =
