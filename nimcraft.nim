@@ -22,10 +22,10 @@ type Mode {.pure} = enum
 type WorkerStatus {.pure} = enum
   idle, busy, done
 
-type Point = object
-  x*, y*, z*: int
-
-type Map = Table[Point, int]
+type 
+  Point = tuple[x, y, z: float]
+  Vec = Point
+  Map = Table[Point, int]
 
 type Sign = object
   x*, y*, z*, face*: int
@@ -88,7 +88,7 @@ var m = Model(
   dbPath: "nimcraft.db")
 
 proc chunked(x: float): int =
-  (x.round / chunkSize).floor.int
+  floor(x.round / chunkSize).int
 
 proc timeOfDay(): float =
   if m.dayLength <= 0:
@@ -108,18 +108,15 @@ proc getScaleFactor(): float =
   GetFrameBufferSize(m.window, bufW.addr, bufH.addr)
   min(2, max(1, bufW / winW))
 
-type Vec = object
-  x*, y*, z*: float
-
 proc getSightVec(rx, ry: float): Vec =
   let
     rx1 = rx - 90.0.degToRad
     m = ry.cos
-  Vec(x: rx1.cos * m, y: ry.sin, z: rx1.sin * m)
+  (rx1.cos * m, ry.sin, rx1.sin * m)
 
 proc getMotionVec(flying: bool, sz, sx, rx, ry: float): Vec =
   if sz == 0 and sx == 0:
-    return Vec(x: 0, y: 0, z: 0)
+    return (0.0, 0.0, 0.0)
   let
     rx1 = rx + sz.arctan2(sx)
     rxcos = rx1.cos
@@ -134,8 +131,8 @@ proc getMotionVec(flying: bool, sz, sx, rx, ry: float): Vec =
       m = 1
     if sz > 0:
       y = -y
-    return Vec(x: rxcos * m, y: y, z: rxsin * m)
-  Vec(x: rxcos, y: 0, z: rxsin)
+    return (rxcos * m, y, rxsin * m)
+  (rxcos, 0.0, rxsin)
 
 proc genBuf(data: var openArray[float]): GLuint =
   glGenBuffers(1, result.addr)
@@ -154,7 +151,7 @@ proc genCrosshairBuf(): GLuint =
 proc append(data: var openArray[float], ind: var int, args: varargs[float]) =
   for arg in args:  
     data[ind] = arg
-    ind += 1
+    ind.inc
 
 proc genWireframeBuf(x, y, z, n: float): GLuint =
   const
@@ -184,8 +181,8 @@ proc genWireframeBuf(x, y, z, n: float): GLuint =
 
 proc normalize(xyz: var array[3, float]) =
   let d = xyz.mapIt(it.pow(2)).sum.sqrt
-  for x in 0..xyz.high:
-    xyz[x] /= d
+  for i in 0..2:
+    xyz[i] /= d
 
 proc makeSphere(data: var array[12288, float], ind: var int, r: float, detail: int, a, b, c: array[3, float], 
   ta, tb, tc: array[2, float]) =
@@ -339,7 +336,17 @@ plants[21] = 52 # sun flower
 plants[22] = 53 # white flower 
 plants[23] = 54 # blue flower 
 
-proc makePlant(ao, light: float, px, py, pz, n: float, w: int, rotation: float): array[240, float] =
+type Mat = array[16, float]
+
+proc identityMat(): Mat =
+  [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+
+proc rotate(x, y, z: float, angle: float): Mat =
+  var xyz = [x, y, z] 
+  xyz.normalize
+  [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, xyz[0], xyz[1], xyz[2], 1]
+                 
+proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240, float] =
   const
     positions = [
       [[ 0.0,-1,-1], [ 0.0,-1, 1], [ 0.0, 1,-1], [ 0.0, 1, 1]],
@@ -385,9 +392,12 @@ proc makePlant(ao, light: float, px, py, pz, n: float, w: int, rotation: float):
         dv + (if uv[1] == 0: 0.0 else: s),
         ao,
         light)
+  var 
+    m = identityMat()
+    m1 = rotate(0, 1, 0, rotation.degToRad) 
 
-proc genPlantBuf(px, py, pz, n: float, w: int): GLuint =
-  var data = makePlant(0, 1, px, py, pz, n, w, 45) 
+proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
+  var data = makePlant(0, 1, x, y, z, n, w, 45) 
   data.genBuf
 
 proc resetModel() =
