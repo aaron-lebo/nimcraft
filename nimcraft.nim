@@ -338,13 +338,20 @@ plants[23] = 54 # blue flower
 
 type Mat = array[16, float]
 
-proc identityMat(): Mat =
+proc identity(): Mat =
   [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 
-proc rotate(x, y, z, angle: float): Mat =
-  var xyz = [x, y, z] 
-  xyz.normalize
-  [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, xyz[0], xyz[1], xyz[2], 1]
+proc rotate(xyz: Point, angle: float): Mat =
+  #xyz.normalize   
+  let (x, y, z) = xyz
+  let
+    s = angle.sin
+    c = angle.cos
+    m = 1 - c
+  [m * x * x + c,     m * x * y - z * s, m * z * x + y * s,     0, 
+   m * x * y + z * s, m * y * y + c,     m * y * z * y - x * s, 0,
+   m * z * x - y * s, m * y * z + x * s, m * z * z + c,         0, 
+   0,                 0,                 0,                     1]
                  
 proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240, float] =
   const
@@ -393,8 +400,8 @@ proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240
         ao,
         light)
   var 
-    m = identityMat()
-    m1 = rotate(0, 1, 0, rotation.degToRad) 
+    m = identity()
+    m1 = rotate((0.0, 1.0, 0.0), rotation.degToRad) 
 
 proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
   var data = makePlant(0, 1, x, y, z, n, w, 45) 
