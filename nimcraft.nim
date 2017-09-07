@@ -231,17 +231,17 @@ proc genSkyBuf(): GLuint =
   var 
       data: array[12288, float] 
       ind: int
-  for i in indices:
+  for ix in indices:
     data.makeSphere(
       ind, 
       1, 
       3,
-      positions[i[0]],
-      positions[i[1]],
-      positions[i[2]],
-      uvs[i[0]],
-      uvs[i[1]],
-      uvs[i[2]])
+      positions[ix[0]],
+      positions[ix[1]],
+      positions[ix[2]],
+      uvs[ix[0]],
+      uvs[ix[1]],
+      uvs[ix[2]])
   data.genBuf
 
 var blocks: array[256, array[6, int]]
@@ -341,7 +341,7 @@ type Mat = array[16, float]
 proc identityMat(): Mat =
   [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 
-proc rotate(x, y, z: float, angle: float): Mat =
+proc rotate(x, y, z, angle: float): Mat =
   var xyz = [x, y, z] 
   xyz.normalize
   [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, xyz[0], xyz[1], xyz[2], 1]
