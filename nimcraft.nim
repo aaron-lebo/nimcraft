@@ -341,10 +341,11 @@ type Mat = array[16, float]
 proc identity(): Mat =
   [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 
-proc rotate(xyz: Point, angle: float): Mat =
-  #xyz.normalize   
-  let (x, y, z) = xyz
-  let
+proc rotate(px, py, pz, angle: float): Mat =
+  var xyz = [px, py, pz]  
+  xyz.normalize
+  let 
+    (x, y, z) = (xyz[0], xyz[1], xyz[2])
     s = angle.sin
     c = angle.cos
     m = 1 - c
@@ -401,7 +402,7 @@ proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240
         light)
   var 
     m = identity()
-    m1 = rotate((0.0, 1.0, 0.0), rotation.degToRad) 
+    m1 = rotate(0, 1, 0, rotation.degToRad) 
 
 proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
   var data = makePlant(0, 1, x, y, z, n, w, 45) 
