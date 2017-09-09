@@ -353,6 +353,11 @@ proc rotate(px, py, pz, angle: float): Mat =
    m * x * y + z * s, m * y * y + c,     m * y * z * y - x * s, 0,
    m * z * x - y * s, m * y * z + x * s, m * z * z + c,         0, 
    0,                 0,                 0,                     1]
+
+proc multiply(a, b: var Mat) =
+  for c in 0..3: 
+    for r in 0..3: 
+      a[c * 4 + r] = (0..3).mapIt(a[it * 4 + r] * b[c * 4 + it]).sum
                  
 proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240, float] =
   const
@@ -403,6 +408,7 @@ proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240
   var 
     m = identity()
     m1 = rotate(0, 1, 0, rotation.degToRad) 
+  m.multiply(m1)
 
 proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
   var data = makePlant(0, 1, x, y, z, n, w, 45) 
