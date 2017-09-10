@@ -331,14 +331,6 @@ proc genCubeBuf(x, y, z, n: float, w: int): GLuint =
   var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, b[0], b[1], b[2], b[3], b[4], b[5], x, y, z, n)
   data.genBuf
              
-proc genPlayerBuf(x, y, z, rx, ry: float): GLuint =
-  var ao, light: Mat6x4
-  for i in 0..5:
-    for j in 0..3:
-      light[i][j] = 0.8
-  var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, 226, 224, 241, 209, 225, 227, 0, 0, 0, 0.4)
-  data.genBuf
-
 var plants: array[256, int]
 plants[17] = 48 # tall grass
 plants[18] = 49 # yellow flower
@@ -380,14 +372,14 @@ proc multiply(vec: var Vec4, mat: Mat) =
   for i in 0..3: 
     vec[i] = (0..3).mapIt(mat[it * 4 + i] * vec[it]).sum
 
-proc apply(data: var array[240, float], mat: Mat, count, offset, stride: int) =
+proc apply(data: var openArray[float], mat: Mat, count, offset, stride: int) =
   var ind: int
   for i in 0..<count:
     var vec: Vec4
-    for j in 0..3:
+    for j in 0..2:
       vec[j] = data[offset + stride * i + j]
     vec.multiply(mat)
-    data.append(ind, vec[0], vec[1], vec[2], vec[3])
+    data.append(ind, vec[0], vec[1], vec[2])
                  
 proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240, float] =
   const
@@ -443,6 +435,21 @@ proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240
 
 proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
   var data = makePlant(0, 1, x, y, z, n, w, 45) 
+  data.genBuf
+
+proc genPlayerBuf(x, y, z, rx, ry: float): GLuint =
+  var ao, light: Mat6x4
+  for i in 0..5:
+    for j in 0..3:
+      light[i][j] = 0.8
+  var 
+    data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, 226, 224, 241, 209, 225, 227, 0, 0, 0, 0.4)
+    m = identity()
+  m.multiply(rotation(0, 1, 0, rx))
+  m.multiply(rotation(rx.cos, 0, rx.sin, -ry))
+  data.apply(m, 36, 3, 10)
+  m.multiply(translation(x, y, z))
+  data.apply(m, 36, 0, 10)
   data.genBuf
 
 proc resetModel() =
