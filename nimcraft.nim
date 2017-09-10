@@ -248,7 +248,10 @@ var blocks: array[256, array[6, int]]
 
 type Mat6x4 = array[6, array[4, float]]
 
-proc makeCube(ao, light: Mat6x4, left, right, top, bottom, front, back: int, x, y, z, n: float, w: int): array[360, float] =
+proc makeCube(ao, light: Mat6x4, 
+  left, right, top, bottom, front, back, 
+  wleft, wright, wtop, wbottom, wfront, wback: int, 
+  x, y, z, n: float): array[360, float] =
   const
     positions = [
       [[-1.0,-1,-1], [-1.0,-1, 1], [-1.0, 1,-1], [-1.0, 1, 1]],
@@ -290,7 +293,7 @@ proc makeCube(ao, light: Mat6x4, left, right, top, bottom, front, back: int, x, 
     b = s - 1 / 2048.0
   let
     faces = [left, right, top, bottom, front, back]
-    tiles = blocks[w] 
+    tiles = [wleft, wright, wtop, wbottom, wfront, wback]
   var ind: int
   for i in 0..5:
     if faces[i] == 0:
@@ -324,7 +327,16 @@ proc genCubeBuf(x, y, z, n: float, w: int): GLuint =
   for i in 0..5:
     for j in 0..3:
       light[i][j] = 0.5
-  var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w)
+  let b = blocks[w]
+  var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, b[0], b[1], b[2], b[3], b[4], b[5], x, y, z, n)
+  data.genBuf
+             
+proc genPlayerBuf(x, y, z, rx, ry: float): GLuint =
+  var ao, light: Mat6x4
+  for i in 0..5:
+    for j in 0..3:
+      light[i][j] = 0.8
+  var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, 226, 224, 241, 209, 225, 227, 0, 0, 0, 0.4)
   data.genBuf
 
 var plants: array[256, int]
