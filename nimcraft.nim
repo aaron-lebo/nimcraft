@@ -322,11 +322,14 @@ proc makeCube(ao, light: Mat6x4,
         aoi[j],
         light[i][j])
 
-proc genCubeBuf(x, y, z, n: float, w: int): GLuint =
-  var ao, light: Mat6x4
+proc fill(mat: var Mat6x4, x: float) =
   for i in 0..5:
     for j in 0..3:
-      light[i][j] = 0.5
+      mat[i][j] = x 
+
+proc genCubeBuf(x, y, z, n: float, w: int): GLuint =
+  var ao, light: Mat6x4
+  light.fill(0.5)
   let b = blocks[w]
   var data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, b[0], b[1], b[2], b[3], b[4], b[5], x, y, z, n)
   data.genBuf
@@ -445,12 +448,10 @@ proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
 
 proc genPlayerBuf(x, y, z, rx, ry: float): GLuint =
   var ao, light: Mat6x4
-  for i in 0..5:
-    for j in 0..3:
-      light[i][j] = 0.8
-  var 
-    data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, 226, 224, 241, 209, 225, 227, 0, 0, 0, 0.4)
+  light.fill(0.8)
+  var
     m = identity()
+    data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, 226, 224, 241, 209, 225, 227, 0, 0, 0, 0.4)
   m.rotate(0, 1, 0, rx)
   m.rotate(rx.cos, 0, rx.sin, -ry)
   data.apply(m, 36, 3, 10)
