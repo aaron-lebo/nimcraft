@@ -336,12 +336,14 @@ plants[21] = 52 # sun flower
 plants[22] = 53 # white flower 
 plants[23] = 54 # blue flower 
 
-type Mat = array[16, float]
+type 
+  Mat = array[16, float]
+  Vec4 = array[4, float]
 
 proc identity(): Mat =
   [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 
-proc rotate(px, py, pz, angle: float): Mat =
+proc rotation(px, py, pz, angle: float): Mat =
   var xyz = [px, py, pz]  
   xyz.normalize
   let 
@@ -354,10 +356,26 @@ proc rotate(px, py, pz, angle: float): Mat =
    m * z * x - y * s, m * y * z + x * s, m * z * z + c,         0, 
    0,                 0,                 0,                     1]
 
-proc multiply(a, b: var Mat) =
+proc translation(dx, dy, dz: float): Mat =
+  [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, dx, dy, dz, 1]
+
+proc multiply(a: var Mat, b: Mat) =
   for c in 0..3: 
     for r in 0..3: 
       a[c * 4 + r] = (0..3).mapIt(a[it * 4 + r] * b[c * 4 + it]).sum
+
+proc multiply(vec: var Vec4, mat: Mat) =
+  for i in 0..3: 
+    vec[i] = (0..3).mapIt(mat[it * 4 + i] * vec[it]).sum
+
+proc apply(data: var array[240, float], mat: Mat, count, offset, stride: int) =
+  var ind: int
+  for i in 0..<count:
+    var vec: Vec4
+    for j in 0..3:
+      vec[j] = data[offset + stride * i + j]
+    vec.multiply(mat)
+    data.append(ind, vec[0], vec[1], vec[2], vec[3])
                  
 proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240, float] =
   const
@@ -405,10 +423,11 @@ proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240
         dv + (if uv[1] == 0: 0.0 else: s),
         ao,
         light)
-  var 
-    m = identity()
-    m1 = rotate(0, 1, 0, rotation.degToRad) 
-  m.multiply(m1)
+  var m = identity()
+  m.multiply(rotation(0, 1, 0, rotation.degToRad))
+  result.apply(m, 24, 3, 10)
+  m.multiply(translation(x, y, z))
+  result.apply(m, 24, 0, 10)
 
 proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
   var data = makePlant(0, 1, x, y, z, n, w, 45) 
