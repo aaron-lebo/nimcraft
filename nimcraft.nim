@@ -372,6 +372,12 @@ proc multiply(vec: var Vec4, mat: Mat) =
   for i in 0..3: 
     vec[i] = (0..3).mapIt(mat[it * 4 + i] * vec[it]).sum
 
+proc rotate(m: var Mat, x, y, z, angle: float) =
+  m.multiply(rotation(x, y, z, angle))
+
+proc translate(m: var Mat, x, y, z: float) =
+  m.multiply(translation(x, y, z))
+
 proc apply(data: var openArray[float], mat: Mat, count, offset, stride: int) =
   var ind: int
   for i in 0..<count:
@@ -428,9 +434,9 @@ proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240
         ao,
         light)
   var m = identity()
-  m.multiply(rotation(0, 1, 0, rotation.degToRad))
+  m.rotate(0, 1, 0, rotation.degToRad)
   result.apply(m, 24, 3, 10)
-  m.multiply(translation(x, y, z))
+  m.translate(x, y, z)
   result.apply(m, 24, 0, 10)
 
 proc genPlantBuf(x, y, z, n: float, w: int): GLuint =
@@ -445,10 +451,10 @@ proc genPlayerBuf(x, y, z, rx, ry: float): GLuint =
   var 
     data = makeCube(ao, light, 1, 1, 1, 1, 1, 1, 226, 224, 241, 209, 225, 227, 0, 0, 0, 0.4)
     m = identity()
-  m.multiply(rotation(0, 1, 0, rx))
-  m.multiply(rotation(rx.cos, 0, rx.sin, -ry))
+  m.rotate(0, 1, 0, rx)
+  m.rotate(rx.cos, 0, rx.sin, -ry)
   data.apply(m, 36, 3, 10)
-  m.multiply(translation(x, y, z))
+  m.translate(x, y, z)
   data.apply(m, 36, 0, 10)
   data.genBuf
 
