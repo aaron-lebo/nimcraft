@@ -11,6 +11,7 @@ const
   maxNameLength = 32
   maxPathLength = 256
   maxTextLength = 266
+  s = 0.0625
   workers = 4
 
 type Align {.pure} = enum
@@ -288,7 +289,6 @@ proc makeCube(ao, light: Mat6x4,
       [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
       [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
       [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
-    s = 0.0625
     a = 0 + 1 / 2048.0
     b = s - 1 / 2048.0
   let
@@ -350,8 +350,8 @@ type
 proc identity(): Mat =
   [1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 
-proc rotation(px, py, pz, angle: float): Mat =
-  var xyz = [px, py, pz]  
+proc rotation(x0, y0, z0, angle: float): Mat =
+  var xyz = [x0, y0, z0]  
   xyz.normalize
   let 
     (x, y, z) = (xyz[0], xyz[1], xyz[2])
@@ -412,7 +412,6 @@ proc makePlant(ao, light, x, y, z, n: float, w: int, rotation: float): array[240
       [[1.0, 0], [0.0, 0], [1.0, 1], [0.0, 1]],
       [[0.0, 0], [0.0, 1], [1.0, 0], [1.0, 1]],
       [[1.0, 0], [1.0, 1], [0.0, 0], [0.0, 1]]]
-    s = 0.0625
   let
     du = float(plants[w] mod 16) * s
     dv = plants[w] / 16 * s
@@ -457,6 +456,41 @@ proc genPlayerBuf(x, y, z, rx, ry: float): GLuint =
   data.apply(m, 36, 3, 10)
   m.translate(x, y, z)
   data.apply(m, 36, 0, 10)
+  data.genBuf
+
+proc genTextBuf(x0, y, n: float, text: string): GLuint =
+  const s2 = s * 2
+  var 
+    ind: int 
+    data: seq[float] 
+    x = x0
+  for i in 0..<text.len:
+    let 
+      w = text[i].int - 32
+      du = float(w mod 16) * s
+      dus = du + s
+      dv = 1 - w / 16 * s2 - s2 
+      dvs = dv + s2
+      xmn = x - n
+      xpn = x + n
+      m = n / 2
+      ymm = y - m
+      ypm = y + m
+    data.append(
+      ind, 
+      xmn, ymm,
+      du, dv,
+      xpn, ymm,
+      dus, dv,
+      xpn, ypm,
+      dus, dvs,
+      xmn, ymm,
+      du, dv,
+      xpn, ypm,
+      dus, dvs,
+      xmn, ypm,
+      du, dvs)
+    x += n
   data.genBuf
 
 proc resetModel() =
